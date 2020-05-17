@@ -7,12 +7,15 @@
 
 `#sec-environment-records`
 
-“作用域”？
+Environment，更常见的称呼可能叫“作用域”。
 
-> *environment record*（为了方便，下面直接写为*env*）记录了变量名与值的绑定关系，
+*environment record*（为了方便，下面直接写为*env*）记录了变量名与值的绑定关系。比如`let a = b`在当前环境(lexical environment)里创建`a`的绑定，并且要找到`b`的绑定，否则就出错。
+
+只是记录自己这层的绑定关系还不够，比如函数里怎么使用外面的变量，于是*env*还要有一个[[OuterEnv]]指向*outer env*，本层没有就到外面找。
+
+> `#sec-getidentifierreference`
 >
-> *env*还有一个[[OuterEnv]]指向*outer env*，关系...类似proto
-
+> 当前*env*里没有这个记录的绑定关系时到[[OuterEnv]]里找，直到*env*为null
 
 ```js
 {
@@ -37,13 +40,7 @@
 |---|---|
 | b | 2 |
 
-里面的block可以访问到外面的a是因为会递归查[[OuterEnv]]
-
-> `#sec-getidentifierreference`
->
-> 当前*env*里没有这个记录的绑定关系时到[[OuterEnv]]里找，直到*env*为null
-
-实际上绑定关系不止name和value，还有是否initialized，能否被delete。
+实际上绑定关系记录的不止name和value，还有是否initialized，能否被delete，以及是否mutable。
 
 | name | value | is initialized | can be deleted |
 |---|---|---|---|
