@@ -144,16 +144,38 @@ block的语句都执行完毕后恢复原来的env，这个刚创建的env就不
 
 函数声明会被提升（hoist），这其中的语法解释在 `#sec-block-static-semantics-toplevelvarscopeddeclarations`
 
+function declaration是一个hoistable declaration，
+当在script或function的顶层时，它出现在TopLevelLexicallyScopedDeclarations，
+同时它也是个declaration，所以也出现在LexicallyScopedDeclarations（在后面block有用）。
+
 ```js
 // 类似var f = ...，区别在于f不是初始化为undefined而是这个函数（closure）
 function f() {}
 ```
 
-另外一个值得注意的是function declaration是一个declaration，
-它除了出现在上面说的TopLevelLexicallyScopedDeclarations，
-同时也出现在LexicallyScopedDeclarations。
+除了这个区别之外，函数声明跟var的另一个区别发生在，当它与block混到一起的时候。
 
-...所以，下面的代码两个env里都有f的绑定关系
+此时函数声明不在function或script顶层，而是在block里面，所以它就不在TopLevelLexicallyScopedDeclarations，
+所以要么干脆报错不允许在block之外访问里面声明的函数，要么想点别的办法允许从外部访问。
+
+规范并没有说必须选哪个，但是...选A的话后面就不用看了...
+
+这部分的详细解释在附录B.3.3 (`#sec-block-level-function-declarations-web-legacy-compatibility-semantics`)。
+
+举个例子，
+
+```js
+{
+  function f() {}
+  var a = 1;
+}
+```
+
+这个block会创建一个新的`newEnv`，这个`newEnv`只有`f`的绑定，因为函数声明也是个声明。
+`a`在一个外部的`varEnv`（current execution context的VariableEnvironment）里，目前为止似乎没有超出理解范围。
+但是外部可以访问到`f`吗？所以这个外部的`varEnv`里也有一份`f`的绑定，虽然有一定条件。
+
+也就是说存在两份`f`（名-值）的绑定。下面的两个打印的结果是一样的，但是两次查询到的env是不一样的。
 
 ```js
 {
@@ -163,7 +185,7 @@ function f() {}
 console.log(f);
 ```
 
-也就是说，你可以改变其中一个而不影响另一个
+改一个明显的例子，如果有两份绑定，那么我们是否可以改变其中一个而不影响另一个
 
 ```js
 {
@@ -172,5 +194,21 @@ console.log(f);
 }
 // 这里的f还是函数
 f()
+```
+
+另外，虽然这两个env都有f，但是他们初始化的时机是不同的。
+
+```js
+// varEnv创建f绑定，并初始化为undefined，此时调用这个函数f()会报错
+{ // 创建newEnv，创建f绑定，并初始化为函数closure
+  // 此时varEnv里的f绑定依然是undefined
+  f() // ok，因为newEnv里的f已经是个函数
+  function f() {} // 此时将varEnv里的f绑定初始化为这个closure
+  f.a = 1; // 可以添加一个属性，证明是同一个closure
+  f = 2; // 此时更改的是newEnv里的f绑定的值，varEnv里的还是函数
+}
+// varEnv的f绑定是函数，所以可以调用，并且f.a是1
+f();
+f.a === 1;
 ```
 
