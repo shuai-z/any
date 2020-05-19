@@ -29,7 +29,7 @@ push calleeContext; // ...ready
 
 至此，当前的函数作用域里只有`this`的绑定（箭头函数没有）。
 
-![](assets/1.png)
+<img src=assets/1.png height=200 />
 
 
 ## 2. 函数形参
@@ -42,7 +42,7 @@ function f() {}
 
 即使这个函数什么都没有，它还是有个"arguments"。
 
-![](assets/2-arguments.png)
+<img src=assets/2-arguments.png height=200 />
 
 ### 2.2 简单情形
 
@@ -62,13 +62,14 @@ function f(a) {}
 function f(a = whatever) {}
 ```
 
-![](assets/3-arguments.png)
+<img src=assets/3-formals.png height=300 />
 
-> 为什么？
+> 为什么呢？
+>
 > 因为要让eval()产生的绑定放在这些形参的外面
 
 > 下面写的一些代码只是为了尽量说明语言的“能力”，第一眼看不懂也不要紧，
-> 因为你永远都不会看到这样的代码，也不需要写出这样的代码，不然打死活该。
+> 因为你永远都不会看到这样的代码，也不需要写出这样的代码。
 
 ```js
 // eval的'x'在a,b,c(和arguments)的外面，这里也就是在函数作用域那一层(与'this'同级)
@@ -81,15 +82,13 @@ function (a = 1, b = eval('var x = a*2;x;'), c = x+3) {
 
 清楚了吗？
 
-别急着回答，你是真的清楚了还是以为清楚了。
+除非你已经了解eval()的过程，不然我很怀疑这几句话和例子能彻底解释清楚“多的这层env的意义到底是什么”。
 
-上面的“为什么？因为...”看似写明了原因，实际上却是个结果。
+上面的“为什么？因为...”看似写明了原因，其实是结果。
 
-除非你已经了解eval()的过程，不然我很怀疑这几句话和例子能彻底
-解释清楚“多的这层env的意义到底是什么”而不是让你更加困惑。
-
-> 想想，为什么eval()要这样？
-> 这才是更关键的问题，但是等一下再看，因为很快会再次碰到。(#sec-evaldeclarationinstantiation)
+> 那么为什么eval()要这样？
+>
+> 这个问题等一下再回答，因为很快会再次碰到。(#sec-evaldeclarationinstantiation)
 
 再想一个问题，上面说是不能在strict模式下，那如果在strict模式下会怎么样？
 
@@ -129,7 +128,7 @@ function f(
 
 所以，如果形参有表达式，则有必要为函数体隔出一个新的作用域。上面这段的结果是
 
-![](assets/4-var.png)
+<img src=assets/4-var.png height=400 />
 
 ### 3.1 let
 
@@ -147,7 +146,6 @@ var有位置了，let呢，跟var一起吗？
 > 就是所说的“var所在的作用域”和“let所在的块作用域”，可是为什么必须要求
 > 他们指向两个不同的EnvRec呢？
 >
-> 还是那句话，不要强行去记忆一句话或一个观点，然后信誓旦旦的说自己明白了。
 
 还是先看个例子。
 
@@ -170,7 +168,7 @@ function f2() {
 这两个函数报的错是一样的，但是报错的时机是不同的。
 
 - `f1`在解析阶段就会报错 (#sec-function-definitions-static-semantics-early-errors)
-- `f2`在被调用才报错，因为字符串都还没被解析 (#sec-evaldeclarationinstantiation)
+- `f2`在被调用才报错，因为字符串还要被解析 (#sec-evaldeclarationinstantiation)
 
 ```js
 // 另外提一下，如果把上面两行合到一起，a的值也不会被改动，
@@ -187,8 +185,14 @@ SyntaxError: Identifier 'x' has already been declared
 // 而下面的字符串解析就报错，因为let和var声明了同一个名字x。
 ```
 
-如果是从前一篇作用域看过来的，那么，现在应该有能力推测出: eval()是怎么处理里面的`var`的，以及为什么此时需要多一层作用域以记录`let/const`。（跟上面说到形参时留下的问题是同一个）
+如果是从前一篇作用域看过来的，那么，现在应该有能力推测出: 
+
+1. eval()是怎么处理里面的`var`的;
+2. 为什么需要多一层作用域以记录`let/const`;
+3. 以及什么情况下不需要创建这层作用域，也就是let跟var在可以同一层。
 
 提示一下，EnvRec里的绑定关系并没有记录这个绑定是let来的还是var来的。
 
-留白。
+`#sec-evaldeclarationinstantiation`
+
+。
