@@ -1,5 +1,6 @@
 
 # js
 
-- [作用域 (EnvironmentRecord)](es-env-rec.md)
-- [作用域 - 函数 (FunctionDeclarationInstantiation)](es-env-function.md)
+- [作用域 (Environment)](es-env-rec.md)
+  - [块与函数声明 (BlockDeclarationInstantiation)](es-block-and-inner-functiondeclaration.md)
+  - [函数 (FunctionDeclarationInstantiation)](es-env-function.md)
