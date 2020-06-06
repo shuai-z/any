@@ -203,11 +203,25 @@ static const int kInvalidEnumCacheSentinel =
 
 ## 3. 算法
 
-知道了数据结构，所以`obj.key`怎么从`key`找到索引位置呢？
+知道了数据结构，那么`obj.key`怎么找到`key`在第几个位置呢？不考虑缓存。
 
-（当然，肯定是有缓存的{hash->index}）
+要知道每个属性名都会计算hash值，查找的时候也是用hash去比较，而不是挨个用字符串匹配；另外虽然hash要快，但可能会有冲突。
 
-map里有个instance_descriptors，（在超过限制之前）属性会加到这里面：
+属性都会放到map下的descriptors数组，记录<<name,value,details>>，这个数组是按添加的顺序排列的，而不是按hash的大小排列的，也就是说这个数组是*无序*的。
+
+把这个问题简化一下就是，如何在一个无序的数组里查找某个值。
+
+不能在搜索的时候重新排序，因为太慢；也不能在添加新属性的时候排序，因为影响了key的顺序。
+
+v8的做法是直接把hash排序的位置编码进details里，可以理解成用另外一个数组记录顺序。这样添加属性是 O(N)，查找是 O(lgN)。
+
+比如下图中最小值在offset=2的位置：
+
+<img src=assets/v8/object-algo-1.png width=200 />
+
+---
+
+数据结构：
 
 ```tq
 @generatePrint
@@ -235,9 +249,110 @@ extern class DescriptorArray extends HeapObject {
 }
 ```
 
-这个结构在heap snapshot里能看到一部分。
+添加：
 
-还是看个例子吧，
+https://source.chromium.org/chromium/chromium/src/+/master:v8/src/objects/descriptor-array-inl.h;l=216;drc=c77ccde5b729af314595e528d89837d2c890f94f;bpv=0;bpt=1
+
+```cc
+void DescriptorArray::Append(Descriptor* desc) {
+  DisallowHeapAllocation no_gc;
+  int descriptor_number = number_of_descriptors();
+  DCHECK_LE(descriptor_number + 1, number_of_all_descriptors());
+  set_number_of_descriptors(descriptor_number + 1);
+  Set(InternalIndex(descriptor_number), desc);
+
+  uint32_t hash = desc->GetKey()->Hash();
+
+  int insertion;
+
+  for (insertion = descriptor_number; insertion > 0; --insertion) {
+    Name key = GetSortedKey(insertion - 1);
+    if (key.Hash() <= hash) break;
+    SetSortedKey(insertion, GetSortedKeyIndex(insertion - 1));
+  }
+
+  SetSortedKey(insertion, descriptor_number);
+}
+```
+
+查找：
+
+https://source.chromium.org/chromium/chromium/src/+/master:v8/src/objects/fixed-array-inl.h;l=287;drc=c77ccde5b729af314595e528d89837d2c890f94f;bpv=0;bpt=1
+
+```cc
+template <SearchMode search_mode, typename T>
+int Search(T* array, Name name, int valid_entries, int* out_insertion_index) {
+  SLOW_DCHECK(array->IsSortedNoDuplicates());
+
+  if (valid_entries == 0) {
+    if (search_mode == ALL_ENTRIES && out_insertion_index != nullptr) {
+      *out_insertion_index = 0;
+    }
+    return T::kNotFound;
+  }
+
+  // Fast case: do linear search for small arrays.
+  const int kMaxElementsForLinearSearch = 8;
+  if (valid_entries <= kMaxElementsForLinearSearch) {
+    return LinearSearch<search_mode>(array, name, valid_entries,
+                                     out_insertion_index);
+  }
+
+  // Slow case: perform binary search.
+  return BinarySearch<search_mode>(array, name, valid_entries,
+                                   out_insertion_index);
+}
+
+
+// Perform a binary search in a fixed array.
+template <SearchMode search_mode, typename T>
+int BinarySearch(T* array, Name name, int valid_entries,
+                 int* out_insertion_index) {
+  DCHECK(search_mode == ALL_ENTRIES || out_insertion_index == nullptr);
+  int low = 0;
+  int high = array->number_of_entries() - 1;
+  uint32_t hash = name.hash_field();
+  int limit = high;
+
+  DCHECK(low <= high);
+
+  while (low != high) {
+    int mid = low + (high - low) / 2;
+    Name mid_name = array->GetSortedKey(mid);
+    uint32_t mid_hash = mid_name.hash_field();
+
+    if (mid_hash >= hash) {
+      high = mid;
+    } else {
+      low = mid + 1;
+    }
+  }
+
+  for (; low <= limit; ++low) {
+    int sort_index = array->GetSortedKeyIndex(low);
+    Name entry = array->GetKey(InternalIndex(sort_index));
+    uint32_t current_hash = entry.hash_field();
+    if (current_hash != hash) {
+      if (search_mode == ALL_ENTRIES && out_insertion_index != nullptr) {
+        *out_insertion_index = sort_index + (current_hash > hash ? 0 : 1);
+      }
+      return T::kNotFound;
+    }
+    if (entry == name) {
+      if (search_mode == ALL_ENTRIES || sort_index < valid_entries) {
+        return sort_index;
+      }
+      return T::kNotFound;
+    }
+  }
+
+  if (search_mode == ALL_ENTRIES && out_insertion_index != nullptr) {
+    *out_insertion_index = limit + 1;
+  }
+  return T::kNotFound;
+}
+```
+
 
 
 
