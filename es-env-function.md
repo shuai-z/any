@@ -68,10 +68,10 @@ function f(a = whatever) {}
 >
 > 因为要让eval()产生的绑定放在这些形参的外面
 
-> 下面写的一些代码只是为了尽量说明语言的“能力”，第一眼看不懂也不要紧，
-> 因为你永远都不会看到这样的代码，也不需要写出这样的代码。
-
 ```js
+// 下面写的一些代码只是为了尽量说明语言的“能力”，第一眼看不懂也不要紧，
+// 因为你永远都不会看到这样的代码，也不需要写出这样的代码。
+
 // eval的'x'在a,b,c(和arguments)的外面，这里也就是在函数作用域那一层(与'this'同级)
 // 就不画图了，参考上面的自己放进去即可
 
@@ -86,14 +86,14 @@ function (a = 1, b = eval('var x = a*2;x;'), c = x+3) {
 
 上面的“为什么？因为...”看似写明了原因，其实是结果。
 
-> 那么为什么eval()要这样？
+> 那为什么有eval()就要这样把参数作用域隔开？
 >
 > 这个问题等一下再回答，因为很快会再次碰到。(#sec-evaldeclarationinstantiation)
 
 再想一个问题，上面说是不能在strict模式下，那如果在strict模式下会怎么样？
 
 简单说下，因为严格模式下，eval里面的var与let在同一个作用域，也就是说
-它的var跑不出来，所以就不需要额外新加的这层了。具体的以后单独写一下eval。
+它的var跑不出来，所以就不需要额外新加的这层了。
 
 
 ## 3. 函数体
@@ -137,7 +137,6 @@ var有位置了，let呢，跟var一起吗？
 > “let是块作用域，var是什么什么作用域，所以他们是隔开的”
 >
 > 哦，这就有点死记硬背了。
-> 作用域是什么，这俩的作用域水火不容吗，为什么要隔开，怎么隔。
 >
 > 前一篇写过了，EnvRec有DeclarativeEnvRec，FunctionEnvRec，以及其他
 > 跟这里无关的几个。并且FunctionEnvRec也是DeclarativeEnvRec。
@@ -191,7 +190,7 @@ SyntaxError: Identifier 'x' has already been declared
 2. 为什么需要多一层作用域以记录`let/const`;
 3. 以及什么情况下不需要创建这层作用域，也就是let跟var在可以同一层。
 
-在ES规范里，EnvRec里的绑定关系并没有记录一个绑定是let来的还是var来的。
+在ES规范里，EnvRec里的绑定关系并没有记录一个绑定是let来的还是var来的。（但具体实现不一定这样）
 
 `#sec-evaldeclarationinstantiation`
 
