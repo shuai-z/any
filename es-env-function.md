@@ -191,7 +191,7 @@ SyntaxError: Identifier 'x' has already been declared
 2. 为什么需要多一层作用域以记录`let/const`;
 3. 以及什么情况下不需要创建这层作用域，也就是let跟var在可以同一层。
 
-提示一下，EnvRec里的绑定关系并没有记录这个绑定是let来的还是var来的。
+在ES规范里，EnvRec里的绑定关系并没有记录一个绑定是let来的还是var来的。
 
 `#sec-evaldeclarationinstantiation`
 
