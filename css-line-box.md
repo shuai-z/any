@@ -29,7 +29,7 @@ span {
 </div>
 ```
 
-<img src=assets/css/line-box-1.png height=200 />
+<img src=assets/css/line-box-1.png height=100 />
 
 图中虚线是baseline的位置，每个盒子的高度都是50（苹方字体，36px），这个高度是只与当前使用字体有关，与line-height无关。
 
