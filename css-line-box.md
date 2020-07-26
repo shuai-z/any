@@ -41,7 +41,7 @@ span {
 
 ### 2. line-height，确定文字的高度
 
-文字的高度由line-height决定。
+文字的高度由line-height决定。line-height可以比font metric的高度小，也就是文字占据的空间可能比需要的空间要小，当line-height:0的时候高度可以是0。
 
 因为没有指定，上面line-height是normal，根据字体和大小，最终实际值是50px，此时，line height = AD。
 
@@ -67,6 +67,53 @@ line height = L + AD = L_before + AD + L_after
 
 ### 3. 确定baseline
 
+一个line box的font-size和line-height可以确定初始的高度和baseline，此处想象有一个看不见的文字。
+
+先考虑最简单的，所有元素line-height:normal, vertical-align:baseline。所以line box里面每个inline box的baseline都要跟这个line box的baseline对齐。
+
+```html
+<style>
+  div {
+    outline:1px solid #ccc;
+  }
+  span {
+    outline: 1px solid #888;
+  }
+</style>
+<div style="font-size:30px;">
+  <span>看不到xxx</span>
+  <span style="font-size:24px;">abc</span>
+  <span style="font-size:16px;">abc</span>
+</div>
+```
+
+<img src=assets/css/line-box-3.png height=50 />
+
+图中能看到每个box的baseline与这个line box的baseline是对齐的，因为这两个inline box的高度比"看不到的文字"的高度要小，看起来比较“正常”。下面把字体改大一点。
+
+如果还是直接按baseline对齐：
+
+<img src=assets/css/line-box-4.png height=50 />
+
+此时中间盒子的高度已经超出line box了，因为“line box的高度必须要能容纳内部所有盒子”，所以必须把line box“撑开”，结果就是baseline的位置要往下移。
+
+<img src=assets/css/line-box-5.png height=50 />
+
+现在可以把line-height考虑进来，先修改一下，方便查看盒子的真实高度：
+
+```html
+<span style="font-size:16px">abc</span>
+
+<!-- 改成 -->
+
+<div style="display:inline-block;font-size:16px;line-height:normal;">
+  <span>abc</span>
+</div>
+```
+
+测试字体16px的font metric高度是22px，改变line-height观察结果。
+
+对于文字来说，他们占据的高度由line-height决定，一旦这个盒子超出了原本line box的高度，这个line box就需要扩大以容纳这个盒子。
 
 ### 4. vertical-align
 
