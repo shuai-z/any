@@ -117,3 +117,38 @@ line height = L + AD = L_before + AD + L_after
 
 ### 4. vertical-align
 
+比如见的比较多的middle：
+
+```
+middle
+Align the vertical midpoint of the box with the baseline of the parent box plus half the x-height of the parent.
+```
+
+让当前盒子的中点与父盒子的baseline+xheight/2，xheight就是小写字母‘x’的高度（不是font metrics），这种情况把隐形的‘x’显示出来就很明显了。
+
+```c
+    if (vertical_align == EVerticalAlign::kSub) {
+      vertical_position += font_size / 5 + 1;
+    } else if (vertical_align == EVerticalAlign::kSuper) {
+      vertical_position -= font_size / 3 + 1;
+    } else if (vertical_align == EVerticalAlign::kTextTop) {
+      vertical_position += box_model.BaselinePosition(
+                               BaselineType(), first_line, line_direction) -
+                           font_metrics.Ascent(BaselineType());
+    } else if (vertical_align == EVerticalAlign::kMiddle) {
+      vertical_position = vertical_position -
+                          LayoutUnit(font_metrics.XHeight() / 2) -
+                          box_model.LineHeight(first_line, line_direction) / 2 +
+                          box_model.BaselinePosition(BaselineType(), first_line,
+                                                     line_direction);
+    } else if (vertical_align == EVerticalAlign::kTextBottom) {
+      vertical_position += font_metrics.Descent(BaselineType());
+      // lineHeight - baselinePosition is always 0 for replaced elements (except
+      // inline blocks), so don't bother wasting time in that case.
+      if (!box_model.IsAtomicInlineLevel() ||
+          box_model.IsInlineBlockOrInlineTable())
+        vertical_position -= (box_model.LineHeight(first_line, line_direction) -
+                              box_model.BaselinePosition(
+                                  BaselineType(), first_line, line_direction));
+                                  
+```
