@@ -2,13 +2,31 @@
 
 * 前提：inline formatting context, line box, inline box
 
-主要写line box的高度和内部inline box的对齐。
-
 关键点：
 
 1. line box的高度要能足够容纳其内部的盒子，也就是说它的高度至少要达到内部盒子的最大高度。
 2. 对于img,inline-block这样的元素，高度是他们的margin box；对于普通的inline box，他们的高度是line-height。
 3. 确定baseline的位置。
+
+---
+
+看几个简单的例子检测一下
+
+```html
+<div>
+  <img ... />
+</div>
+```
+
+为什么`<img>`下面会有“空隙”？为什么很多时候加`vertical-align:top或bottom`可以没有这个“空隙”？什么时候这样做也没用？
+
+```html
+<div style="line-height:0;font-size:30px;">
+  <span style="font-size:20px">x</span>
+</div>
+```
+
+`<div>`的高度测试的结果是4，为什么？
 
 ### 1. 文字
 
